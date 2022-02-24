@@ -1,0 +1,54 @@
+#include <iostream>
+#include "lib/infint/InfInt.h"
+
+#include "collatz.hpp"
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#define BUF_SIZE 1024
+
+int main(int argc, char *argv[]) {
+    int desc, buf_len, desc2;
+
+    desc = open(argv[1], O_RDONLY);
+    if (desc == -1) {
+        exit(1);
+    }
+
+    size_t length;
+    std::string contest;
+    if (read(desc, &length, sizeof(size_t)) < 0) {
+        std::cout << "zle wczytana dlugosc\n";
+        exit(1);
+    }
+//    std::cout << "dlugosc " << length << " plik " << argv[2]<<'\n';
+    contest.resize(length);
+//    std::cout << "resize zrobiony\n";
+
+    if (read(desc, (void *) contest.c_str(), length) < 0) {
+        exit(1);
+    }
+    InfInt n = InfInt(contest.c_str());
+
+
+    uint64_t result = calcCollatz(n);
+//    std::cout << "dziecko probuje zapisac\n";
+    desc2 = open(argv[2], O_RDWR);
+    if (desc2 == -1) {
+        std::cout << "nieudany desc2 :(\n";
+        exit(1);
+    }
+
+    if (write(desc2, std::to_string(result).c_str(),
+              std::to_string(result).size()) < 0)
+        exit(1);
+    std::cout << "wpisalem " << &result
+            << " dlugosci " << std::to_string(result).size() << '\n';
+    if (close(desc))
+        exit(1);
+    if (close(desc2))
+        exit(1);
+//    std::cout << "dziecko zamyka\n";
+    exit(0);
+}
